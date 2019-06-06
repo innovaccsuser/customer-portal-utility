@@ -1,0 +1,55 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+          <!-- XML Schema Generated from XML Document on Mon Jul 16 2018 15:45:11 GMT-0300 (Argentina Standard Time) -->
+          <!-- with XmlGrid.net Free Online Service http://xmlgrid.net -->
+
+
+<xs:element name="commands-definitions">
+	<xs:complexType>
+		
+		<xs:sequence>
+			<xs:element name="command" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="properties">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="property" maxOccurs="unbounded">
+										<xs:complexType>
+											<xs:sequence>
+												<xs:element name="key" type="xs:string"></xs:element>
+												<xs:element name="value" type="xs:string"></xs:element>
+											</xs:sequence>
+										</xs:complexType>
+									</xs:element>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+						<xs:element name="sql-command" minOccurs="0" xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="script" type="xs:string"></xs:element>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+						<xs:element name="rest-command" minOccurs="0" xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+							<xs:complexType>
+                                <xs:attribute name="name" type="xs:string"></xs:attribute>
+                                <xs:attribute name="description" type="xs:string"></xs:attribute>
+                                <xs:attribute name="method" type="xs:string"></xs:attribute>
+           						<xs:attribute name="path" type="xs:string"></xs:attribute>
+                            </xs:complexType>
+						</xs:element>
+					</xs:sequence>
+					
+					<xs:attribute name="name" type="xs:string"></xs:attribute>
+					<xs:attribute name="description" type="xs:string"></xs:attribute>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="name" type="xs:string"></xs:attribute>
+		
+	</xs:complexType>
+
+</xs:element>
+	
+</xs:schema>

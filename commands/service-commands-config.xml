@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<commands-definitions name="Services"  >	
+
+
+	<command name="removeServiceMotive" description="find remove service motives">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			SELECT 'change' AS value, 'Cambio' AS name 
+			UNION ALL 
+			SELECT 'manteinence', 'Mantenimiento'
+			UNION ALL 
+			SELECT 'other', 'Otro'
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="findAll" description="find all client services">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			select s.id, 
+			s.identificador as identifier, 
+			CASE s.estado WHEN 'active' THEN 'ACTIVO' END as status, 
+			s.direccion as address,
+			s.direccion as displayName,
+			s.direccion_postal as billingAddress, 
+			s.tipo as type, 
+			s.debito_automatico as automaticDebit,
+			s.factura_digital as digitalInvoice,
+			s.tarifa_social as socialRate,
+			s.id_cliente as clientId,
+			c.nombre_completo as ownerName 
+				from SUMINISTRO s
+				inner join CLIENTE c on s.id_cliente = c.id_cliente
+				where s.id_cliente = :clientId
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="findByIdentifier" description="find service by identifier">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			select s.id, 
+			s.identificador as identifier, 
+			CASE s.estado WHEN 'active' THEN 'ACTIVO' END as status, 
+			s.direccion as address,
+			s.direccion as displayName,
+			s.direccion_postal as billingAddress, 
+			s.tipo as type, 
+			s.debito_automatico as automaticDebit,
+			s.factura_digital as digitalInvoice,
+			s.tarifa_social as socialRate,
+			s.id_cliente as clientId,
+			s.tipo_debito_automatico as debitType,
+			c.nombre_completo as ownerName 
+				from SUMINISTRO s
+				inner join CLIENTE c on s.id_cliente = c.id_cliente
+				where s.identificador = :identifier
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="getServicesSummary" description="find service summary">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			select 
+			c.nombre_completo as ownerFullname,
+			count(distinct s.identificador) as servicesCount, 
+			count(f.suministro) as receiptsCount, 
+		    count(case when f.vencimiento &lt; curdate() then 1 end) as overdueReceiptsCount,
+		    sum(case when pf.importe is null then f.importe else f.importe - pf.importe end) as totalDebt    
+			from innova_vo_client.SUMINISTRO s
+			inner join innova_vo_client.CLIENTE c on c.id_cliente = s.id_cliente
+			left join innova_vo_client.FACTURA f on s.identificador = f.suministro
+			left join (select p.nro_factura, sum(p.importe) as importe from innova_vo_client.PAGO p 
+				group by p.nro_factura) as pf on f.nro_factura = pf.nro_factura
+			where (f.tipo is null or f.tipo = 'Factura') 
+			and s.identificador in (:identifiers) 
+			group by c.nombre_completo
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="createDemoData" description="create data for demo">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			call create_demo_data(:firstname, :lastname, :fullname, :country, :documentType, :documentNumber, :gender, :birthdate, :clientId)
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="addToDirectDebit" description="add service to direct debit" >
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			update SUMINISTRO set debito_automatico = 1, tipo_debito_automatico = (:debitType) where identificador in (:identifiers)
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="removeToDirectDebit" description="remove service from direct debit" >
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			update SUMINISTRO set debito_automatico = 0 where identificador in (:identifiers)
+			</script>
+		</sql-command>
+	</command>
+	
+	
+	<command name="addToDigitalInvoice" description="add service to digital invoice">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			update SUMINISTRO set factura_digital = 1 where identificador in (:identifiers)
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="cancelToDigitalInvoice" description="cancel service from digital invoice">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			update SUMINISTRO set factura_digital = 0 where identificador in (:identifiers)
+			</script>
+		</sql-command>
+	</command>
+	
+
+</commands-definitions>

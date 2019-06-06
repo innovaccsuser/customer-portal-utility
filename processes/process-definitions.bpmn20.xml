@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+  xmlns:flowable="http://flowable.org/bpmn"
+  typeLanguage="http://www.w3.org/2001/XMLSchema"
+  expressionLanguage="http://www.w3.org/1999/XPath"
+  targetNamespace="http://www.flowable.org/processdef">
+  
+  <process id="reclamoTecnicoSinLuz2" name="Reclamo tecnico sin luz2" ticketType="blackout" serviceType="T1">
+        
+       <startEvent id="reclamoTecnicoSinLuz2Start" flowable:formKey="blackoutPrueba" />
+       <sequenceFlow id="flow8" sourceRef="reclamoTecnicoSinLuz2Start" targetRef="theTask1" />
+       
+       <userTask id="theTask1" name="my task1" flowable:category="technicalClaim1" flowable:candidateGroups="callcenter"  flowable:formKey="blackoutPruebaBO" />
+       <sequenceFlow id="flow9" sourceRef="theTask1" targetRef="theEnd1" />
+       
+       <endEvent id="theEnd1" />
+   </process>
+   
+    <process id="bajaSuministro" name="proceso baja de un suministro" ticketType="removeService" serviceType="T1">
+        
+        <startEvent id="bajaSuministroStart" flowable:formKey="bajaSuministro" />
+        <sequenceFlow id="flow13" sourceRef="bajaSuministroStart" targetRef="bajaSuministroTask" />
+        
+        <userTask id="bajaSuministroTask" name="bajaSuministroTask" flowable:candidateGroups="callcenter" flowable:formKey="bajaSuministroBO" />
+        <sequenceFlow id="flow14" sourceRef="bajaSuministroTask" targetRef="checkApproval" />
+        
+	    <exclusiveGateway id="checkApproval" name="Check ticket approval"></exclusiveGateway>
+	    <sequenceFlow sourceRef="checkApproval" targetRef="changeToApprovedStatus">
+			<conditionExpression xsi:type="tFormalExpression">
+		        <![CDATA[
+		          ${approved}
+		        ]]>
+			</conditionExpression>
+		</sequenceFlow>
+		<sequenceFlow sourceRef="checkApproval" targetRef="changeToRejectedStatus">
+			<conditionExpression xsi:type="tFormalExpression">
+		        <![CDATA[
+		          ${!approved}
+		        ]]>
+			</conditionExpression>
+		</sequenceFlow>
+        
+        <serviceTask id="changeToApprovedStatus" flowable:delegateExpression="${ticketChangeStatusDelegate}" >
+	        <extensionElements>
+				<flowable:field name="nextStatus" stringValue="approved"/>
+			</extensionElements>
+		</serviceTask>
+    	<sequenceFlow id="flow15" sourceRef="changeToApprovedStatus" targetRef="bajaSuministroEnd" />
+        
+        <serviceTask id="changeToRejectedStatus" flowable:delegateExpression="${ticketChangeStatusDelegate}" >
+	        <extensionElements>
+				<flowable:field name="nextStatus" stringValue="rejected"/>
+			</extensionElements>
+		</serviceTask>
+    	<sequenceFlow id="flow16" sourceRef="changeToRejectedStatus" targetRef="bajaSuministroEnd" />
+        
+        <endEvent id="bajaSuministroEnd" />
+    </process>
+  
+	
+  <process id="cambioTitularidad" name="Cambio de Titularidad" isExecutable="true" ticketType="changeOwnership" serviceType="T1" >
+    
+    <!-- Inicio submit de formulario -->
+    <startEvent id="owershipChangeStart" name="Inicio cambio de titular" flowable:formKey="cambioTitularidad"></startEvent>
+    <sequenceFlow id="flow1" sourceRef="owershipChangeStart" targetRef="changeToPendingRevision"></sequenceFlow>
+    
+    <!-- Cambiar a pendiente de revision -->
+    <serviceTask id="changeToPendingRevision" name="Cambiar a pendiente de revision" flowable:delegateExpression="${ticketChangeStatusDelegate}">
+    	<extensionElements>
+			<flowable:field name="nextStatus" stringValue="pendingRevision"/>
+		</extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow4" sourceRef="changeToPendingRevision" targetRef="validateDocs"></sequenceFlow>
+    
+    <!-- Validar docs en BO -->
+    <userTask id="validateDocs" name="Validar Documentacion BO" flowable:candidateGroups="callcenter" flowable:formKey="cambioTitularidadBO"></userTask>
+    <sequenceFlow id="flow2" sourceRef="validateDocs" targetRef="docsApproval"></sequenceFlow>
+    
+    <!-- Checkear docs aprobados o cancelado por el usuario -->
+    <exclusiveGateway id="docsApproval" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow sourceRef="docsApproval" targetRef="calculateDebt">
+		<conditionExpression xsi:type="tFormalExpression">
+	        <![CDATA[
+	          ${approved}
+	        ]]>
+		</conditionExpression>
+	</sequenceFlow>
+	<sequenceFlow sourceRef="docsApproval" targetRef="changeToCancelledStatus">
+		<conditionExpression xsi:type="tFormalExpression">
+	        <![CDATA[
+	          ${cancelledByUser}
+	        ]]>
+		</conditionExpression>
+	</sequenceFlow>
+    
+    <!-- Calcular deuda -->
+    <serviceTask id="calculateDebt" name="Calcular deuda" 
+    	flowable:expression="#{ticketCommandExecutor.execute(execution, 'Bills.getTotalDebt', 'co.innova.crm.vo.core.client.model.ServiceBalance', 'debt')}">
+    </serviceTask>
+    <sequenceFlow id="flow3" sourceRef="calculateDebt" targetRef="checkDebt"></sequenceFlow>
+    
+    <!-- Check deuda mayor o igual a cero -->
+    <exclusiveGateway id="checkDebt" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow sourceRef="checkDebt" targetRef="changeToPendingPaymentStatus">
+		<conditionExpression xsi:type="tFormalExpression">
+	        <![CDATA[
+	          ${debt.amount > 0}
+	        ]]>
+		</conditionExpression>
+	</sequenceFlow>
+	<sequenceFlow sourceRef="checkDebt" targetRef="changeToFinishedStatus">
+		<conditionExpression xsi:type="tFormalExpression">
+	        <![CDATA[
+	          ${debt.amount == 0}
+	        ]]>
+		</conditionExpression>
+	</sequenceFlow>
+	
+	<!-- Cambiar a pendiente de pago -->
+    <serviceTask id="changeToPendingPaymentStatus" name="Cambiar a pendiente de pago" flowable:delegateExpression="${ticketChangeStatusDelegate}">
+    	<extensionElements>
+			<flowable:field name="nextStatus" stringValue="pendingPayment"/>
+		</extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow17" sourceRef="changeToPendingPaymentStatus" targetRef="payDebt"></sequenceFlow>
+    
+    <!-- Pagar deuda si es mayor a cero -->
+    <userTask id="payDebt" name="Pagar deuda"></userTask>
+    <sequenceFlow id="flow5" sourceRef="payDebt" targetRef="checkCancelled"></sequenceFlow>
+    
+    <!-- Checkear si fue cancelado por usuario o evento de finalizacion -->
+    <exclusiveGateway id="checkCancelled" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow sourceRef="checkCancelled" targetRef="checkDebt">
+		<conditionExpression xsi:type="tFormalExpression">
+	        <![CDATA[
+	          ${cancelledByUser == null || !cancelledByUser}
+	        ]]>
+		</conditionExpression>
+	</sequenceFlow>
+	<sequenceFlow sourceRef="checkCancelled" targetRef="changeToCancelledStatus">
+		<conditionExpression xsi:type="tFormalExpression">
+	        <![CDATA[
+	          ${cancelledByUser}
+	        ]]>
+		</conditionExpression>
+	</sequenceFlow>
+	
+	<!-- Cambiar a cancelado -->
+    <serviceTask id="changeToCancelledStatus" name="Cambiar a cancelado" flowable:delegateExpression="${ticketChangeStatusDelegate}">
+    	<extensionElements>
+			<flowable:field name="nextStatus" stringValue="cancelled"/>
+		</extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow6" sourceRef="changeToCancelledStatus" targetRef="cancelledByUser"></sequenceFlow>
+    
+    <!-- Cambiar a finalizado -->
+    <serviceTask id="changeToFinishedStatus" name="Cambiar a finalizado" flowable:delegateExpression="${ticketChangeStatusDelegate}">
+    	<extensionElements>
+			<flowable:field name="nextStatus" stringValue="finished"/>
+		</extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow7" sourceRef="changeToFinishedStatus" targetRef="sendTicketNotification"></sequenceFlow>
+    
+    <!-- Enviar Notificacion -->
+    <serviceTask id="sendTicketNotification" name="Enviar notificacion ticket" flowable:delegateExpression="${ticketSendNotificationDelegate}">
+    	<extensionElements>
+			<flowable:field name="notificationType" stringValue="Ticket OV"/>
+		</extensionElements>
+    </serviceTask>
+    <sequenceFlow id="flow18" sourceRef="sendTicketNotification" targetRef="finished"></sequenceFlow>
+    
+    <endEvent id="finished" name="End"></endEvent>
+    <endEvent id="cancelledByUser" name="End"></endEvent>
+    
+  </process>
+  
+  
+  
+</definitions>

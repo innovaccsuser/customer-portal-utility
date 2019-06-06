@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<command-definition name="Bills" >
+
+	<command name="findServiceBills" description="Find all service bills">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			SELECT f.id,
+			f.nro_factura as billNumber,
+			case when f.tipo_vencimiento = 'primero' then f.vencimiento else null end as firstDueDate,
+			case when f.tipo_vencimiento = 'segundo' then f.vencimiento else null end as secondDueDate,
+			f.concepto as concept,
+			f.concepto as period,
+			f.importe as amount,
+			case 
+				when tipo = 'Factura' then 1
+				else 0
+			end as payable,
+			case when tipo = 'Nota de Credito' then 'Acerquese a una sucursal a cobrar su nota de credito' end as message,
+			case when pf.importe is null then f.importe else f.importe - pf.importe end as balance,
+			tipo as type, 
+			case 
+				when (case when pf.importe is null then f.importe else f.importe - pf.importe end) = 0 then 'Pagado' 
+				when TIMESTAMPDIFF(DAY,f.vencimiento,curdate()) > 31 then 'Pendiente Suspensión' 
+				when f.vencimiento &lt; curdate() then 'Vencido'
+				else 'Pendiente'
+			end as status
+			FROM innova_vo_client.FACTURA f
+			left join (select p.nro_factura, sum(p.importe) as importe from innova_vo_client.PAGO p group by p.nro_factura) 
+				as pf on f.nro_factura = pf.nro_factura
+			where f.suministro = :serviceIdentifier
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="getTotalDebt" description="Find service total balance">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			select 0.0 as amount
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="findCurrentBalance" description="Find service current balance">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			SELECT sum(b.balance) amount, sum(b.vencido) as overdueBills from (
+			select
+			case when pf.importe is null then f.importe else f.importe - pf.importe end as balance,
+		    case when f.vencimiento is not null and f.vencimiento &lt; curdate() then 1 end as vencido
+			FROM innova_vo_client.FACTURA f
+			left join (select p.nro_factura, sum(p.importe) as importe from innova_vo_client.PAGO p group by p.nro_factura) 
+				as pf on f.nro_factura = pf.nro_factura
+			where f.tipo = 'Factura' 
+			and f.suministro = :serviceIdentifier) as b
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="findByNumber" description="Find service current balance">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			SELECT f.id,
+			f.nro_factura as billNumber,
+			case when f.tipo_vencimiento = 'primero' then f.vencimiento else null end as firstDueDate,
+			case when f.tipo_vencimiento = 'segundo' then f.vencimiento else null end as secondDueDate,
+			f.concepto as concept,
+			f.concepto as period,
+			f.importe as amount,
+			case 
+				when tipo = 'Factura' then 1
+				else 0
+			end as payable,
+			case when tipo = 'Nota de Credito' then 'Acerquese a una sucursal a cobrar su nota de credito' end as message,
+			case when pf.importe is null then f.importe else f.importe - pf.importe end as balance,
+			tipo as type, 
+			case 
+				when (case when pf.importe is null then f.importe else f.importe - pf.importe end) = 0 then 'Pagado' 
+				when TIMESTAMPDIFF(DAY,f.vencimiento,curdate()) > 31 then 'Pendiente Suspensión' 
+				when f.vencimiento &lt; curdate() then 'Vencido'
+				else 'Pendiente'
+			end as status
+			FROM innova_vo_client.FACTURA f
+			left join (select p.nro_factura, sum(p.importe) as importe from innova_vo_client.PAGO p group by p.nro_factura) 
+				as pf on f.nro_factura = pf.nro_factura
+			where f.nro_factura = :billNumber
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="registerPayment" description="Find service current balance">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			insert into PAGO (nro_factura, importe, nro_comprobante, fecha_pago)
+			values (:billNumber, :amount, :ticketNumber, curdate())
+			</script>
+		</sql-command>
+	</command>
+	
+	
+</command-definition>

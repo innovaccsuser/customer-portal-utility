@@ -1,0 +1,40 @@
+    <div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            <div class="row">
+                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12"> <h1></h1>
+                </div>
+            </div>
+            <form #bajaSuministro="ngForm">
+	            <!-- DOMICILIO -->
+	            <div class="row">
+	                <div class="col-xs-12 col-sm-12 col-md-12 col-ls-12 card-component">
+	                    <mat-card> <h3>Por favor indique el motivo de baja</h3>
+	                        <div class="row">
+	                        	<div class="col-xs-12 col-sm-12 col-md-6 col-lg-6">
+	                        	</div>
+	                        </div>
+	                    </mat-card>
+	                </div>
+	            </div>
+	            <!-- SUBMIT -->
+	            <div class="row">
+		            <div class="col-xs-12 col-sm-12 col-md-12 col-ls-12 card-component" >
+		                <mat-card>
+	                	<footer>
+		                    <div class="row">
+		                      <div class="col-xs-8 col-sm-8 col-md-10 col-lg-10">
+		                      </div>
+		                      <div class="col-xs-4 col-sm-4 col-md-2 col-lg-2 align-right">
+		                        <button mat-raised-button class="primary-button" [disabled]="bajaSuministro.invalid || loading" (click)="submitForm()">FINALIZAR</button>
+		                      </div>
+		                    </div>
+		                  </footer>
+		                </mat-card>
+		            </div>
+	            </div>
+	            <!-- FIN SUBMIT -->
+            </form>
+        </div>
+    </div>
+</div>

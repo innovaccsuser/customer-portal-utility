@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<command-definition name="Graphs" >	
+
+	<command name="getServiceGraphData" description="Get graph data">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			select
+			periodo_inicio as displayName, 
+			periodo_inicio as startDate,
+			periodo_fin as endDate, 
+			valle as data, 
+			'Consumo' as name,
+			'Valle' as label,
+			'kw/h' as unit,
+			'line' as type
+			from innova_vo_client.CONSUMO
+			where identificador = :identifier
+		UNION ALL
+			select
+			periodo_inicio as displayName,
+			periodo_inicio as startDate,
+			periodo_fin as endDate, 
+			pico as data, 
+			'Consumo' as name,
+			'Pico' as label,
+			'kw/h' as unit,
+			'line' as type
+			from innova_vo_client.CONSUMO
+			where identificador = :identifier
+		UNION ALL
+			select 
+			periodo_inicio as displayName,
+			periodo_inicio as startDate,
+			periodo_fin as endDate,
+			importe as data,
+			'Importe' as name,
+			'Importe' as label,
+			'ARS' as unit,
+			'line' as type
+			from innova_vo_client.CONSUMO
+			where identificador = :identifier
+			</script>
+		</sql-command>
+	</command>
+	
+	
+</command-definition>

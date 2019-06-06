@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<commands-definitions name="Clients" >
+
+	<command name="findById" description="find client by id">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			select id, 
+			nombre as name, 
+			apellido as lastname, 
+			nombre_completo as fullname,
+			tipo_documento as documentType,
+			nro_documento as documentNumber, 
+			fecha_nacimiento as birthdate,
+			pais as country,
+			id_cliente as clientId
+				from CLIENTE 
+				where id_cliente = :clientId
+			</script>
+		</sql-command>
+	</command>
+	
+	<command name="findByDocumentNumber" description="find client by document number">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			select id, 
+			nombre as name, 
+			apellido as lastname, 
+			nombre_completo as fullname,
+			tipo_documento as documentType,
+			nro_documento as documentNumber, 
+			fecha_nacimiento as birthdate,
+			pais as country,
+			id_cliente as clientId
+				from CLIENTE
+				where tipo_documento = :documentType 
+				and nro_documento = :documentNumber
+				and genero = :gender
+			</script>
+		</sql-command>
+	</command>
+	
+
+</commands-definitions>
