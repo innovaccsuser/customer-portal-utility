@@ -175,7 +175,7 @@
 		</sql-command>
 	</command>
 	
-	<command name="cancelToDigitalInvoiceNew" description="cancel service from digital invoice">
+	<command name="cancelToDigitalInvoiceNew2" description="cancel service from digital invoice">
 		<properties>
 			<property>
 				<key>datasource</key>
