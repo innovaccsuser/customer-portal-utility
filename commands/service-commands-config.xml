@@ -175,5 +175,19 @@
 		</sql-command>
 	</command>
 	
+	<command name="cancelToDigitalInvoiceNew" description="cancel service from digital invoice">
+		<properties>
+			<property>
+				<key>datasource</key>
+				<value>null</value>
+			</property>
+		</properties>
+		<sql-command>
+			<script>
+			update SUMINISTRO set factura_digital = 0 where identificador in (:identifiers)
+			</script>
+		</sql-command>
+	</command>
+	
 
 </commands-definitions>
